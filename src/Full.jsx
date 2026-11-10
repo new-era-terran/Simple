@@ -16,13 +16,13 @@ import {cameraAt, dipAt, LIGHTS, CUTS} from './camera.js';
 const USE_BOKEH = false;
 
 const Vignette = {
-  uniforms: {tDiffuse: {value: null}, amount: {value: 0.32}},
+  uniforms: {tDiffuse: {value: null}, amount: {value: 0.5}},
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
   fragmentShader: 'uniform sampler2D tDiffuse; uniform float amount; varying vec2 vUv; void main(){ vec4 c = texture2D(tDiffuse, vUv); vec2 d = vUv - 0.5; float v = 1.0 - amount * smoothstep(0.25, 0.75, length(d * vec2(1.0, 0.8))); gl_FragColor = vec4(c.rgb * v, c.a); }',
 };
 
 const Grade = {
-  uniforms: {tDiffuse: {value: null}, sat: {value: 1.2}, con: {value: 1.08}, warm: {value: 0.035}},
+  uniforms: {tDiffuse: {value: null}, sat: {value: 1.22}, con: {value: 1.14}, warm: {value: 0.05}},
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
   fragmentShader: `uniform sampler2D tDiffuse; uniform float sat; uniform float con; uniform float warm; varying vec2 vUv;
   void main(){ vec4 c = texture2D(tDiffuse, vUv); vec3 col = c.rgb; float l = dot(col, vec3(0.299,0.587,0.114));
@@ -91,7 +91,7 @@ const Scene = ({frame, fps}) => {
     scene.background = null;
     lights.sky.position.copy(cam.pos);
     const su = lights.sky.material.uniforms; su.top.value.set(L.top); su.hor.value.set(L.hor);
-    su.sunDir.value.set(L.sunOff[0], L.sunOff[1], L.sunOff[2]).normalize(); su.sunOn.value = (cam.plan.light === 'day' || cam.plan.light === 'morning' || cam.plan.light === 'yard') ? 1 : 0;
+    su.sunDir.value.set(L.sunOff[0], L.sunOff[1], L.sunOff[2]).normalize(); su.sunOn.value = (['day', 'morning', 'yard', 'golden'].includes(cam.plan.light)) ? 1 : 0; su.sunCol.value.set(L.sun);
     if (L.pt) { lights.pt.color.set(L.pt.c); lights.pt.intensity = L.pt.i; lights.pt.distance = L.pt.d; lights.pt.position.set(A[0] + L.pt.p[0], A[1] + L.pt.p[1], A[2] + L.pt.p[2]); } else lights.pt.intensity = 0;
     world.update(tt, camera, cam.key);
     comp.bokeh.uniforms.focus.value = cam.pos.distanceTo(cam.look);

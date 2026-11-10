@@ -290,3 +290,64 @@ export function cloud(x, y, z, s = 1, color = '#e9e4dc') {
   g.position.set(x, y, z);
   return g;
 }
+
+// ================= v2 painted textures =================
+function canvasTex(w, h, draw, repeat = [1, 1]) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); draw(g, w, h);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; t.repeat.set(repeat[0], repeat[1]); return t;
+}
+const shade = (hex, k) => new THREE.Color(hex).multiplyScalar(k).getStyle();
+export function woodTex(base = '#9a6a42', {planks = 6, seed = 3, repeat = [2, 2]} = {}) {
+  const r = rng(seed);
+  return canvasTex(512, 512, (g, W, H) => {
+    const ph = H / planks;
+    for (let i = 0; i < planks; i++) {
+      g.fillStyle = shade(base, 0.85 + r() * 0.3); g.fillRect(0, i * ph, W, ph);
+      g.strokeStyle = shade(base, 0.62); g.globalAlpha = 0.5; g.lineWidth = 1.5;
+      for (let k = 0; k < 7; k++) { g.beginPath(); const y = i * ph + 6 + r() * (ph - 12); g.moveTo(0, y); for (let x = 0; x <= W; x += 32) g.lineTo(x, y + Math.sin(x * 0.02 + k) * 3); g.stroke(); }
+      g.globalAlpha = 1; g.fillStyle = INK; g.fillRect(0, i * ph, W, 4);
+      const cut = r() * W; g.fillRect(cut, i * ph, 4, ph);
+      g.fillStyle = shade(base, 0.45); for (const x of [cut - 14, cut + 14]) { g.beginPath(); g.arc(x, i * ph + ph / 2, 3, 0, 7); g.fill(); }
+    }
+  }, repeat);
+}
+export function brickTex(base = '#b8644a', {seed = 5, repeat = [2, 2], mortar = '#d8c8b0'} = {}) {
+  const r = rng(seed);
+  return canvasTex(512, 512, (g, W, H) => {
+    g.fillStyle = mortar; g.fillRect(0, 0, W, H);
+    const bh = 32, bw = 80;
+    for (let y = 0, row = 0; y < H; y += bh, row++) for (let x = -(row % 2) * bw / 2; x < W; x += bw) {
+      g.fillStyle = shade(base, 0.8 + r() * 0.35); g.fillRect(x + 3, y + 3, bw - 6, bh - 6);
+      g.strokeStyle = 'rgba(53,31,34,0.55)'; g.lineWidth = 2; g.strokeRect(x + 3, y + 3, bw - 6, bh - 6);
+    }
+  }, repeat);
+}
+export function cobbleTex(base = '#9a9088', {seed = 7, repeat = [8, 1]} = {}) {
+  const r = rng(seed);
+  return canvasTex(512, 512, (g, W, H) => {
+    g.fillStyle = shade(base, 0.6); g.fillRect(0, 0, W, H);
+    for (let y = 0; y < H; y += 40) for (let x = (y / 40 % 2) * 22; x < W; x += 46) {
+      g.fillStyle = shade(base, 0.85 + r() * 0.35); g.beginPath(); g.ellipse(x + r() * 6, y + 20 + r() * 4, 19 + r() * 4, 15 + r() * 3, r(), 0, 7); g.fill();
+      g.strokeStyle = 'rgba(53,31,34,0.6)'; g.lineWidth = 2.5; g.stroke();
+      g.fillStyle = 'rgba(255,240,220,0.25)'; g.beginPath(); g.ellipse(x - 5, y + 14, 7, 4, 0, 0, 7); g.fill();
+    }
+  }, repeat);
+}
+export function grassTex(base = '#6fa64a', {seed = 9, repeat = [20, 20]} = {}) {
+  const r = rng(seed);
+  return canvasTex(512, 512, (g, W, H) => {
+    g.fillStyle = base; g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 26; i++) { g.fillStyle = shade(base, 0.8 + r() * 0.35); g.globalAlpha = 0.5; g.beginPath(); g.ellipse(r() * W, r() * H, 30 + r() * 70, 20 + r() * 40, r() * 3, 0, 7); g.fill(); }
+    g.globalAlpha = 0.7;
+    for (let i = 0; i < 900; i++) { const x = r() * W, y = r() * H, l = 6 + r() * 10; g.strokeStyle = r() > 0.5 ? shade(base, 0.62) : shade(base, 1.25); g.lineWidth = 1.6; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (r() - 0.5) * 5, y - l); g.stroke(); }
+    g.globalAlpha = 1;
+  }, repeat);
+}
+export function wallTex(base = '#3f6e78', {seed = 11, repeat = [2, 1]} = {}) {
+  const r = rng(seed);
+  return canvasTex(512, 256, (g, W, H) => {
+    g.fillStyle = base; g.fillRect(0, 0, W, H);
+    for (let x = 0; x < W; x += 64) { g.fillStyle = shade(base, 0.92 + r() * 0.12); g.fillRect(x, 0, 64, H); g.fillStyle = 'rgba(53,31,34,0.25)'; g.fillRect(x, 0, 2, H); }
+    for (let i = 0; i < 20; i++) { g.fillStyle = 'rgba(0,0,0,0.06)'; g.beginPath(); g.ellipse(r() * W, r() * H, 20 + r() * 50, 10 + r() * 30, 0, 0, 7); g.fill(); }
+  }, repeat);
+}

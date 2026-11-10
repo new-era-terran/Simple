@@ -62,7 +62,7 @@ export const PALETTES = {
   officer: {jacket: '#7d6a4a', jacket2: '#6a593d', tie: '#5b6935', hair: '#5a3a26'},
 };
 
-export function character({palette = 'engineer', hat = 'none', glasses = false, seed = 1, scale = 1} = {}) {
+export function character({palette = 'engineer', hat = 'none', glasses = false, seed = 1, scale = 1, face = 'calm', hair = 'fringe', beard = 'none', head: headScale = 1.14, skin = '#f4ecdc'} = {}) {
   const P = PALETTES[palette];
   const root = new THREE.Group();
   const body = new THREE.Group(); root.add(body);
@@ -75,32 +75,82 @@ export function character({palette = 'engineer', hat = 'none', glasses = false, 
   body.add(flat(torso, P.jacket, 0.01, 0.022, seed + 3));
   const lower = []; for (let i = 0; i <= 12; i++) { const a = Math.PI + Math.PI * i / 12; lower.push([Math.cos(a) * 0.255, 0.86 + Math.sin(a) * 0.17]); }
   body.add(flat(lower, P.jacket2, 0.015, 0.0, seed + 4));
-  // pocket patch
   body.add(flat([[0.07, 0.98], [0.17, 0.98], [0.16, 0.9], [0.08, 0.9]], P.jacket2, 0.02, 0.008, seed + 5));
-  // white collar + tie
   body.add(flat([[-0.11, 1.25], [0, 1.15], [0.11, 1.25], [0.0, 1.28]], '#fbf7ee', 0.025, 0.01, seed + 6));
   body.add(flat([[-0.025, 1.17], [0.025, 1.17], [0.04, 0.98], [0, 0.93], [-0.04, 0.98]], P.tie, 0.03, 0.008, seed + 7));
+  // buttons
+  for (const y of [1.08, 0.98]) body.add(flat(circlePts(-0.09, y, 0.018), INK, 0.022, 0.0, seed + 30));
   // arms
   const armL = new THREE.Group(), armR = new THREE.Group();
   armL.position.set(-0.2, 1.17, 0.012); armR.position.set(0.2, 1.17, 0.012);
   armL.add(stick(0, 0, -0.08, -0.42, 0.026, 0.02)); armR.add(stick(0, 0, 0.08, -0.42, 0.026, 0.02));
   armL.add(flat(circlePts(-0.085, -0.45, 0.05), INK, 0.002, 0.0, seed + 8)); armR.add(flat(circlePts(0.085, -0.45, 0.05), INK, 0.002, 0.0, seed + 9));
   body.add(armL, armR);
-  // head
-  const head = new THREE.Group(); head.position.set(0, 1.56, 0.04); body.add(head);
-  head.add(flat(circlePts(0, 0, 0.33, 0.31, 36), '#f4ecdc', 0, 0.024, seed + 10));
-  // hair fringe
-  const fringe = circlePts(0, 0, 0.335, 0.315, 18, 0.15, Math.PI - 0.15);
-  fringe.push([-0.24, 0.17], [-0.1, 0.21], [0.04, 0.17], [0.18, 0.22], [0.3, 0.12]);
-  head.add(flat(fringe.reverse(), P.hair, 0.01, 0.012, seed + 11));
-  // calm half-lidded eyes
-  for (const ex of [-0.11, 0.11]) {
-    head.add(flat(circlePts(ex, -0.01, 0.055, 0.05, 14, Math.PI, Math.PI * 2), INK, 0.02, 0.0, seed + 12));
-    const lid = stick(ex - 0.07, 0.01, ex + 0.07, 0.01, 0.009, 0.009); lid.position.z = 0.025; head.add(lid);
+  // head (bigger, like a bean)
+  const head = new THREE.Group(); head.position.set(0, 1.56, 0.04); head.scale.setScalar(headScale); body.add(head);
+  head.add(flat(circlePts(0, 0, 0.33, 0.31, 36), skin, 0, 0.026, seed + 10));
+  // cheek blush
+  for (const ex of [-0.2, 0.2]) { const c = new THREE.Mesh(new THREE.CircleGeometry(0.05, 14), new THREE.MeshBasicMaterial({color: '#f2a58e', transparent: true, opacity: 0.45, depthWrite: false})); c.position.set(ex, -0.09, 0.012); head.add(c); }
+  if (hair === 'fringe') {
+    const fringe = circlePts(0, 0, 0.335, 0.315, 18, 0.15, Math.PI - 0.15);
+    fringe.push([-0.24, 0.17], [-0.1, 0.21], [0.04, 0.17], [0.18, 0.22], [0.3, 0.12]);
+    head.add(flat(fringe.reverse(), P.hair, 0.01, 0.012, seed + 11));
+  } else if (hair === 'side') {
+    head.add(flat(circlePts(0, 0, 0.34, 0.32, 18, 0.32, Math.PI - 0.32).reverse().concat([[-0.29, 0.13], [0.05, 0.22], [0.3, 0.12]]), P.hair, 0.01, 0.012, seed + 11));
+  } else if (hair === 'bald') {
+    for (const sx of [-1, 1]) head.add(flat([[sx * 0.33, 0.05], [sx * 0.27, 0.1], [sx * 0.24, -0.06], [sx * 0.31, -0.1]], P.hair, 0.01, 0.008, seed + 31));
+    const sh = new THREE.Mesh(new THREE.CircleGeometry(0.05, 12), new THREE.MeshBasicMaterial({color: '#ffffff', transparent: true, opacity: 0.6})); sh.scale.set(1.6, 0.6, 1); sh.position.set(-0.12, 0.22, 0.012); head.add(sh);
   }
-  // tiny smile
-  const sm = circlePts(0, -0.11, 0.06, 0.035, 10, Math.PI * 1.15, Math.PI * 1.85);
-  for (let i = 0; i < sm.length - 1; i++) { const s = stick(sm[i][0], sm[i][1], sm[i + 1][0], sm[i + 1][1], 0.008, 0.008); s.position.z = 0.025; head.add(s); }
+  if (beard === 'full') {
+    const bp = circlePts(0, -0.04, 0.33, 0.3, 20, Math.PI * 1.02, Math.PI * 1.98); bp.push([0.26, -0.05], [0.1, -0.08], [-0.1, -0.08], [-0.26, -0.05]);
+    head.add(flat(bp, P.hair, 0.014, 0.012, seed + 32));
+  }
+  if (beard === 'full' || beard === 'moustache') {
+    head.add(flat([[-0.13, -0.075], [-0.02, -0.055], [0, -0.07], [0.02, -0.055], [0.13, -0.075], [0.1, -0.11], [0, -0.09], [-0.1, -0.11]], P.hair, 0.032, 0.008, seed + 33));
+  }
+  // ---- faces: built once, switched by name ----
+  const faces = {};
+  const line = (g, pts, w = 0.009, z = 0.026) => { for (let i = 0; i < pts.length - 1; i++) { const s2 = stick(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1], w, w); s2.position.z = z; g.add(s2); } };
+  const dots = (g, r = 0.035, y = 0.0) => { for (const ex of [-0.11, 0.11]) g.add(flat(circlePts(ex, y, r, r * 1.1, 14), INK, 0.022, 0.0, seed + 40)); };
+  const mouthOpen = (g, w, h, y, tongue = true) => {
+    g.add(flat(circlePts(0, y, w, h, 22), '#3a1418', 0.024, 0.01, seed + 41));
+    if (tongue) g.add(flat(circlePts(0, y - h * 0.45, w * 0.55, h * 0.4, 14), '#e0655f', 0.027, 0.0, seed + 42));
+    g.add(flat([[-w * 0.7, y + h * 0.75], [w * 0.7, y + h * 0.75], [w * 0.6, y + h * 0.45], [-w * 0.6, y + h * 0.45]], '#fbf7ee', 0.028, 0.0, seed + 43));
+  };
+  const brow = (g, x0, y0, x1, y1) => { const b2 = stick(x0, y0, x1, y1, 0.017, 0.017); b2.position.z = 0.03; g.add(b2); };
+  // calm (original)
+  faces.calm = new THREE.Group();
+  for (const ex of [-0.11, 0.11]) { faces.calm.add(flat(circlePts(ex, -0.01, 0.055, 0.05, 14, Math.PI, Math.PI * 2), INK, 0.02, 0.0, seed + 12)); const lid = stick(ex - 0.07, 0.01, ex + 0.07, 0.01, 0.009, 0.009); lid.position.z = 0.025; faces.calm.add(lid); }
+  line(faces.calm, circlePts(0, -0.11, 0.06, 0.035, 10, Math.PI * 1.15, Math.PI * 1.85), 0.008);
+  // smile: happy closed eyes + open grin
+  faces.smile = new THREE.Group();
+  for (const ex of [-0.11, 0.11]) line(faces.smile, circlePts(ex, -0.03, 0.055, 0.05, 9, 0.2, Math.PI - 0.2), 0.011);
+  mouthOpen(faces.smile, 0.1, 0.06, -0.14); faces.smile.children.slice(-3).forEach((m, i) => { if (i === 0) m.scale.y = 1; });
+  // shout: angry brows + big open mouth
+  faces.shout = new THREE.Group(); dots(faces.shout, 0.035, 0.0);
+  brow(faces.shout, -0.19, 0.11, -0.05, 0.05); brow(faces.shout, 0.19, 0.11, 0.05, 0.05);
+  mouthOpen(faces.shout, 0.09, 0.085, -0.15);
+  // angry: V brows + frown
+  faces.angry = new THREE.Group(); dots(faces.angry, 0.032, -0.01);
+  brow(faces.angry, -0.19, 0.1, -0.04, 0.04); brow(faces.angry, 0.19, 0.1, 0.04, 0.04);
+  line(faces.angry, circlePts(0, -0.2, 0.07, 0.05, 10, Math.PI * 0.2, Math.PI * 0.8), 0.011);
+  // surprised: big white eyes + raised brows + O mouth
+  faces.surprised = new THREE.Group();
+  for (const ex of [-0.11, 0.11]) { faces.surprised.add(flat(circlePts(ex, 0.0, 0.07, 0.08, 18), '#ffffff', 0.02, 0.012, seed + 44)); faces.surprised.add(flat(circlePts(ex, -0.01, 0.03, 0.035, 12), INK, 0.026, 0.0, seed + 45)); }
+  brow(faces.surprised, -0.18, 0.15, -0.05, 0.17); brow(faces.surprised, 0.18, 0.15, 0.05, 0.17);
+  mouthOpen(faces.surprised, 0.045, 0.06, -0.16, false);
+  // worried: sad brows + wavy mouth
+  faces.worried = new THREE.Group(); dots(faces.worried, 0.032, -0.01);
+  brow(faces.worried, -0.18, 0.06, -0.05, 0.11); brow(faces.worried, 0.18, 0.06, 0.05, 0.11);
+  line(faces.worried, [[-0.07, -0.14], [-0.035, -0.12], [0, -0.14], [0.035, -0.12], [0.07, -0.14]], 0.009);
+  // smug: one raised brow + side smirk
+  faces.smug = new THREE.Group();
+  for (const ex of [-0.11, 0.11]) { faces.smug.add(flat(circlePts(ex, -0.01, 0.05, 0.045, 14, Math.PI, Math.PI * 2), INK, 0.02, 0.0, seed + 46)); const lid = stick(ex - 0.065, 0.01, ex + 0.065, 0.01, 0.009, 0.009); lid.position.z = 0.025; faces.smug.add(lid); }
+  brow(faces.smug, -0.18, 0.1, -0.05, 0.1); brow(faces.smug, 0.05, 0.12, 0.18, 0.17);
+  line(faces.smug, [[-0.05, -0.12], [0.03, -0.12], [0.09, -0.08]], 0.01);
+  for (const k in faces) { faces[k].visible = k === face; head.add(faces[k]); }
+  let curFace = face;
+  root.userData.setFace = (f) => { if (f === curFace || !faces[f]) return; faces[curFace].visible = false; faces[f].visible = true; curFace = f; };
   if (glasses) {
     for (const ex of [-0.11, 0.11]) {
       const ring = new THREE.Mesh(new THREE.RingGeometry(0.075, 0.095, 24), inkMat); ring.position.set(ex, -0.0, 0.03); head.add(ring);

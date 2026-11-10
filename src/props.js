@@ -136,7 +136,7 @@ export function crowd(n, x0, x1, z, seed = 1, chars = []) {
 export {at};
 
 // ================= Ghost Army props =================
-const OLIVE = '#6b7a3f', OLIVE_D = '#4d5530', OLIVE_L = '#7f8d4c';
+const OLIVE = '#6b7a3f', OLIVE_D = '#646b44', OLIVE_L = '#7f8d4c';
 // inflatable Sherman-style tank (origin on the ground, length along x, gun points +x)
 export function rubberTank({color = OLIVE, seed = 1} = {}) {
   const t = g(); const body = g(); t.add(body);
