@@ -1,0 +1,54 @@
+name: Render video
+on:
+  workflow_dispatch:
+
+jobs:
+  part:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        part: [0, 1, 2, 3, 4, 5, 6, 7]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Render part ${{ matrix.part }} of 8
+        run: |
+          TOTAL=$(node -e "console.log(Math.round(require('./src/timing.json').duration*30))")
+          N=8; P=${{ matrix.part }}
+          A=$(( TOTAL * P / N )); B=$(( TOTAL * (P + 1) / N - 1 ))
+          echo "frames $A-$B of $TOTAL"
+          npx remotion render src/index.jsx Story out/part$P.mp4 --frames=$A-$B --gl=swangle --concurrency=2 --image-format=jpeg --jpeg-quality=92 --crf=17
+      - uses: actions/upload-artifact@v4
+        with:
+          name: part${{ matrix.part }}
+          path: out/part${{ matrix.part }}.mp4
+          retention-days: 1
+
+  join:
+    needs: part
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: part*
+          merge-multiple: true
+          path: parts
+      - name: Join parts and add the voiceover
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
+          for i in 0 1 2 3 4 5 6 7; do echo "file 'parts/part$i.mp4'" >> list.txt; done
+          ffmpeg -y -hide_banner -loglevel error -f concat -safe 0 -i list.txt -c copy silent.mp4
+          ffmpeg -y -hide_banner -loglevel error -i silent.mp4 -i voiceover.wav -map 0:v -map 1:a -c:v copy -c:a aac -b:a 192k -shortest final.mp4
+          ffprobe -v error -show_entries format=duration:stream=width,height,r_frame_rate -of compact final.mp4
+          ffmpeg -hide_banner -i final.mp4 -af volumedetect -f null - 2>&1 | grep -E "mean_volume|max_volume"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: final-video
+          path: final.mp4
+          retention-days: 2

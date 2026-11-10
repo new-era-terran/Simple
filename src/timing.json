@@ -1,0 +1,97 @@
+{
+ "fps": 30,
+ "duration": 61.6,
+ "shots": [
+  {
+   "key": "lift",
+   "start": 0.15,
+   "end": 3.341,
+   "words": 12,
+   "text": "Four soldiers picked up a tank and carried it across a field."
+  },
+  {
+   "key": "cyclists",
+   "start": 3.761,
+   "end": 6.39,
+   "words": 6,
+   "text": "Two French cyclists watched, completely stunned."
+  },
+  {
+   "key": "rubber",
+   "start": 6.81,
+   "end": 11.168,
+   "words": 13,
+   "text": "You see, this tank weighed just ninety-three pounds. It was made of rubber."
+  },
+  {
+   "key": "unit",
+   "start": 11.588,
+   "end": 16.015,
+   "words": 13,
+   "text": "In nineteen forty-four, America built a secret unit of about eleven hundred men."
+  },
+  {
+   "key": "artists",
+   "start": 16.435,
+   "end": 18.788,
+   "words": 6,
+   "text": "Many were painters, designers, and actors."
+  },
+  {
+   "key": "job",
+   "start": 19.208,
+   "end": 23.247,
+   "words": 14,
+   "text": "Their job was to make eleven hundred men look like a whole army division."
+  },
+  {
+   "key": "night",
+   "start": 23.667,
+   "end": 27.658,
+   "words": 14,
+   "text": "They blew up rubber tanks at night. They painted fake markings on their trucks."
+  },
+  {
+   "key": "speakers",
+   "start": 28.078,
+   "end": 32.331,
+   "words": 10,
+   "text": "Huge speakers played recordings of tanks rolling, heard miles away."
+  },
+  {
+   "key": "radio",
+   "start": 32.751,
+   "end": 35.253,
+   "words": 7,
+   "text": "And fake radio messages filled the air."
+  },
+  {
+   "key": "close",
+   "start": 35.673,
+   "end": 38.458,
+   "words": 11,
+   "text": "But one close look, and the whole trick would be over."
+  },
+  {
+   "key": "shapes",
+   "start": 38.878,
+   "end": 47.196,
+   "words": 26,
+   "text": "You see, a spy plane sees shapes and shadows, not weight. Like a cardboard cutout in a shop window, it looks real from across the street."
+  },
+  {
+   "key": "rhine",
+   "start": 47.616,
+   "end": 55.836,
+   "words": 28,
+   "text": "So in March nineteen forty-five, they set up a fake army by the Rhine River. German troops moved to face it, while the real army crossed miles away."
+  },
+  {
+   "key": "secret",
+   "start": 56.256,
+   "end": 60.852,
+   "words": 16,
+   "text": "The Army kept it secret for over fifty years, in case they needed the trick again."
+  }
+ ]
+}
