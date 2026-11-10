@@ -78,16 +78,16 @@ export function buildWorld() {
   W.add(P.at(P.haybale(0.6), -7.4, 0, 4.4, 0.3), crate('SUPPLY', {x: -6.4, y: 0.6, z: 3.2, ry: 0.4, color: '#9a8a5a'}));
   // carried tank + four carriers
   const T1 = P.rubberTank({seed: 1}); W.add(T1);
-  const carriers = [[-1.25, 1.35, 'soldier'], [1.25, 1.4, 'soldier2'], [-2.75, 0.4, 'soldier2'], [2.9, -0.1, 'soldier']].map(([dx, dz, pal], i) => ({c: fe(person(W, chars, 0, 0, pal, 'helmet', 610 + i), i % 2 ? 'smug' : 'smile'), dx, dz}));
+  const carriers = [[-1.25, 1.35, 'soldier'], [1.25, 1.4, 'soldier2'], [-2.75, 0.4, 'soldier2'], [2.9, -0.1, 'soldier']].map(([dx, dz, pal], i) => ({c: fe(person(W, chars, 0, 0, pal, 'helmet', 610 + i), i % 2 ? 'smug' : 'smile', i === 0 ? [['cyclists', 9, 'wink']] : []), dx, dz}));
   // cyclists on the road
   const cyc = [];
-  for (const [x, pal, hat, bc] of [[6.0, 'red', 'beret', '#2f6db3'], [7.5, 'mustard', 'cap', '#c43d32']]) { const c = fe(person(W, chars, x, 8.3, pal, hat, 650 + x * 3, 0.05, false, {beard: x < 7 ? 'moustache' : 'none', hair: 'side'}), 'calm', [['cyclists', 3, 'surprised']]); const b = P.bicycle(bc); b.position.set(x + 0.2, 0.05, 8.75); b.rotation.y = 0.15; W.add(b); cyc.push(c); }
+  for (const [x, pal, hat, bc] of [[6.0, 'red', 'beret', '#2f6db3'], [7.5, 'mustard', 'cap', '#c43d32']]) { const c = fe(person(W, chars, x, 8.3, pal, hat, 650 + x * 3, 0.05, false, {beard: x < 7 ? 'moustache' : 'none', hair: 'side'}), 'calm', [['cyclists', 3, 'scared']]); const b = P.bicycle(bc); b.position.set(x + 0.2, 0.05, 8.75); b.rotation.y = 0.15; W.add(b); cyc.push(c); }
   // "93 LB" tag and the poking soldier at tank T2
   const lb = sign('93 LB', 1.3, 0.62, {bg: '#f2c12e', w: 420, h: 200, font: 'bold 120px Arial'}); lb.position.set(10.7, 2.75, -0.7); W.add(lb);
-  const poker = fe(person(W, chars, 8.6, -0.1, 'soldier2', 'helmet', 640), 'calm', [['rubber', 11, 'smug']]);
+  const poker = fe(person(W, chars, 8.6, -0.1, 'soldier2', 'helmet', 640), 'calm', [['rubber', 13, 'smug']]);
   const pumpSign = sign('AIR', 0.6, 0.3, {bg: '#f2f0e6', w: 200, h: 100, font: 'bold 70px Arial'}); pumpSign.position.set(13.6, 0.85, -1.6); W.add(pumpSign);
   W.add(P.at(P.compressor(), 13.6, 0.05, -2.2, -0.3));
-  const worrier = fe(person(W, chars, 12.5, -0.75, 'soldier', 'helmet', 645), 'calm', [['close', 0, 'worried'], ['close', 10, 'surprised']]);
+  const worrier = fe(person(W, chars, 12.5, -0.75, 'soldier', 'helmet', 645), 'calm', [['close', 0, 'worried'], ['close', 7, 'scared']]);
 
   // ---------- night area: inflating + painting ----------
   const N = LOC.night;
@@ -98,7 +98,7 @@ export function buildWorld() {
   fe(person(W, chars, N - 3.2, 1.0, 'soldier', 'helmet', 801), 'smile'); person(W, chars, N + 2.2, 1.6, 'soldier2', 'cap', 802); person(W, chars, N - 0.8, -2.4, 'soldier', 'helmet', 803);
   const truckN = P.armyTruck(); truckN.position.set(N + 5.2, 0, -1.6); W.add(truckN);
   const mark = sign('6TH ARMD', 1.25, 0.5, {bg: '#5b6935', fg: '#f2f0e6', w: 400, h: 160, font: 'bold 90px Arial', border: false}); mark.position.set(N + 7.2, 1.55, -0.52); W.add(mark);
-  const painter = fe(person(W, chars, N + 6.0, 0.15, 'soldier2', 'cap', 804), 'smug');
+  const painter = fe(person(W, chars, N + 6.0, 0.15, 'soldier2', 'cap', 804), 'smug', [['night', 9, 'wink']]);
   const brush = box(0.04, 0.35, 0.04, '#b98a52', {y: -0.55, x: 0.1, thick: 0.004}); painter.userData.armR.add(brush);
   W.add(P.at(P.paintPots(3), N + 4.7, 0.05, 0.6));
   for (const [x, z, ry] of [[N - 8, -7, 0.4], [N + 12, -8, -0.3], [N - 2, -12, 0]]) { const t = P.rubberTank({seed: x}); t.position.set(x, 0, z); t.rotation.y = ry; W.add(t); }
@@ -149,7 +149,7 @@ export function buildWorld() {
   const designer = fe(person(W, chars, A + 0.2, -1.0, 'soldier2', 'none', 6002, 0.05, true, {hair: 'bald', beard: 'none'}), 'smug');
   W.add(P.at(P.costumeRack(), A + 4.6, 0.05, -3.2));
   const mirror = sign('', 0.9, 1.7, {bg: '#cfe8f2', border: true}); mirror.position.set(A + 6.8, 1.3, -2.2); mirror.rotation.y = -0.6; W.add(mirror);
-  const actor = fe(person(W, chars, A + 4.0, -1.0, 'officer', 'top', 6003, 0.05, false, {beard: 'moustache'}), 'calm', [['artists', 5, 'shout']]);
+  const actor = fe(person(W, chars, A + 4.0, -1.0, 'officer', 'top', 6003, 0.05, false, {beard: 'moustache'}), 'calm', [['artists', 8, 'shout']]);
   W.add(P.at(P.bookshelf(7), A - 6.6, 0.05, -5.15), P.at(P.bookshelf(9, 2.0, 2.4), A + 1.9, 0.05, -5.15));
   const pc = P.poster('CAMO', 1.1, 1.5, '#e6d39a'); P.at(pc, A - 2.4, 3.4, -5.45); W.add(pc);
   const pd = P.poster('DRAW', 1.1, 1.5, '#cfe3f0'); P.at(pd, A + 4.4, 3.5, -5.45); W.add(pd);
@@ -184,20 +184,20 @@ export function buildWorld() {
       mg.strokeStyle = '#4f86b8'; mg.lineWidth = 42; mg.lineCap = 'round'; mg.beginPath(); for (let y = -10; y <= 530; y += 10) { const x = 430 + Math.sin(y / 70) * 28; y < 0 ? mg.moveTo(x, y) : mg.lineTo(x, y); } mg.stroke();
       mg.save(); mg.translate(470, 120); mg.rotate(1.35); mg.fillStyle = '#2f5d8a'; mg.font = 'bold 30px Arial'; mg.textAlign = 'center'; mg.fillText('RHINE', 0, 0); mg.restore();
       label('MARCH 1945', 160, 60, 34);
-      const f = ease(t, wordT('rhine', 9), wordT('rhine', 9) + 0.5);
+      const f = ease(t, wordT('rhine', 10), wordT('rhine', 10) + 0.5);
       if (f > 0.01) { for (let i = 0; i < 8; i++) tankIcon(270 + (i % 4) * 34, 150 + Math.floor(i / 4) * 36, f); if (f > 0.5) label('FAKE ARMY', 320, 260, 30, '#4f7a3a'); }
       arrowC(720, 120, 520, 175, '#7a7f87', ease(t, wordT('rhine', 15), wordT('rhine', 20)));
       arrowC(250, 430, 610, 410, '#2f6db3', ease(t, wordT('rhine', 22), wordT('rhine', 27)));
-      if (t > wordT('rhine', 25)) label('REAL ARMY', 630, 480, 30, '#2f6db3');
+      if (t > wordT('rhine', 24)) label('REAL ARMY', 630, 480, 30, '#2f6db3');
     }
     mapTex.needsUpdate = true;
   };
-  drawMap('job', 0);
+  drawMap('rhine', 0);
   const mt = P.desk(3.2, '#8a5a3b'); mt.position.set(M - 0.2, 0.05, -1.6); W.add(mt);
   W.add(P.at(P.papers(8, 11), M - 0.6, 1.05, -1.6), P.at(P.phone(), M + 0.9, 1.05, -1.4), P.at(P.mug('#2f6db3'), M - 1.5, 1.05, -1.3), P.at(P.deskLamp(), M + 1.2, 1.05, -1.9));
   const roll = cyl(0.06, 0.06, 0.9, '#cfe3f0', {seg: 10, thick: 0.006}); roll.rotation.z = Math.PI / 2; roll.position.set(M + 0.2, 1.12, -1.2); W.add(roll);
   fe(person(W, chars, M - 3.4, -2.6, 'officer', 'cap', 7001), 'smug');
-  const boss = fe(person(W, chars, M - 0.45, 1.25, 'officer', 'none', 7010, 0.05, false, {hair: 'bald', beard: 'full'}), 'smug', [['job', 11, 'smile'], ['rhine', 15, 'angry'], ['rhine', 23, 'smile']]); person(W, chars, M + 3.3, -2.4, 'soldier', 'none', 7002, 0.05, true); person(W, chars, M + 5.4, -0.6, 'soldier2', 'cap', 7003);
+  const boss = fe(person(W, chars, M - 0.45, 1.25, 'officer', 'none', 7010, 0.05, false, {hair: 'bald', beard: 'full'}), 'smug', [['rhine', 15, 'furious'], ['rhine', 22, 'smile']]); person(W, chars, M + 3.3, -2.4, 'soldier', 'none', 7002, 0.05, true); person(W, chars, M + 5.4, -0.6, 'soldier2', 'cap', 7003);
   W.add(P.at(P.filingCabinet(), M - 7.2, 0.05, -4.9), P.at(P.filingCabinet('#8f7d6a'), M - 6.4, 0.05, -4.9), P.at(P.bookshelf(12), M + 6.2, 0.05, -5.15));
   W.add(P.at(P.radio(), M - 6.4, 1.55, -4.9));
   W.add(P.at(P.wallClock(), M + 4.4, 4.5, -5.4));
@@ -212,7 +212,7 @@ export function buildWorld() {
   W.add(room(R, {w: 16, h: 5.5, d: 11, wall: '#6f9a7e', floor: '#a8784a', seed: 33}));
   const rdesk = P.desk(5.2, '#8a5a3b'); rdesk.position.set(R, 0.05, -2.6); W.add(rdesk);
   for (const x of [-1.8, 0, 1.8]) { const rd = P.radio(); rd.scale.setScalar(1.8); rd.position.set(R + x, 1.05, -2.8); W.add(rd); }
-  const ops = [[-1.8, 'soldier'], [0.1, 'soldier2'], [1.9, 'soldier']].map(([x, pal], i) => fe(person(W, chars, R + x, -1.6, pal, 'none', 8000 + i), ['smug', 'shout', 'surprised'][i]));
+  const ops = [[-1.8, 'soldier'], [0.1, 'soldier2'], [1.9, 'soldier']].map(([x, pal], i) => fe(person(W, chars, R + x, -1.6, pal, 'none', 8000 + i), ['smug', 'shout', 'surprised'][i], i === 1 ? [['radio', 4, 'furious']] : []));
   for (const o of ops) { const hs = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.035, 6, 20, Math.PI), toon('#2b2b2e')); hs.position.set(0, 1.62, 0.06); o.children[0].add(hs); }
   W.add(cyl(0.04, 0.04, 2.6, '#7d8a8f', {x: R + 4.0, y: 2.35, z: -3.0}));
   const antTip = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshBasicMaterial({color: '#ff6a4a'})); antTip.position.set(R + 4.0, 3.7, -3.0); W.add(antTip);
@@ -241,7 +241,7 @@ export function buildWorld() {
   const drawYear = (y, done) => { yg.fillStyle = '#f4ead4'; yg.fillRect(0, 0, 420, 260); yg.strokeStyle = INK; yg.lineWidth = 12; yg.strokeRect(6, 6, 408, 248); yg.fillStyle = INK; yg.font = 'bold 130px Arial'; yg.textAlign = 'center'; yg.fillText(String(y), 210, 150); yg.font = 'bold 38px Arial'; yg.fillStyle = done ? '#3f8a45' : '#b3261e'; yg.fillText(done ? 'DECLASSIFIED' : 'CLASSIFIED', 210, 215); yrTex.needsUpdate = true; };
   drawYear(1945, false);
   const yb = box(2.6, 1.6, 0.08, '#fff', {thick: 0.02}); yb.material = [toon('#ddd'), toon('#ddd'), toon('#ddd'), toon('#ddd'), new THREE.MeshBasicMaterial({map: yrTex}), toon('#ddd')]; yb.position.set(V + 4.2, 3.9, -5.3); W.add(yb);
-  const clerk = fe(person(W, chars, V + 2.7, -2.4, 'officer', 'none', 9001, 0.05, true, {hair: 'bald', beard: 'moustache'}), 'calm', [['secret', 12, 'smug']]);
+  const clerk = fe(person(W, chars, V + 2.7, -2.4, 'officer', 'none', 9001, 0.05, true, {hair: 'bald', beard: 'moustache'}), 'calm', [['secret', 11, 'wink']]);
   W.add(P.at(P.filingCabinet(), V + 6.8, 0.05, -1.0, -Math.PI / 2), P.at(P.chair(), V + 1.0, 0.05, -0.3, Math.PI));
   hang(W, V - 2, -1, 5.1, '#5a3a26'); hang(W, V + 3, -1, 5.1, '#5a3a26');
 
@@ -256,14 +256,14 @@ export function buildWorld() {
     for (const q of carriers) { q.c.position.set(lx + q.dx, 0.05 + Math.abs(Math.sin(t * 5 + q.dx)) * 0.05, 1.6 + q.dz); q.c.userData.armL.rotation.z = -2.3; q.c.userData.armR.rotation.z = 2.3; }
     for (const c of cyc) c.userData.armR.rotation.z = shot === 'cyclists' ? 0.6 + Math.sin(t * 7) * 0.1 : 0;
     // 93 LB tag + poke wobble + sag on "over"
-    lb.scale.setScalar(shot === 'rubber' ? pop(t, wordT('rubber', 6)) : 0.001);
-    const poke = ease(t, wordT('rubber', 11), wordT('rubber', 12));
+    lb.scale.setScalar(shot === 'rubber' ? pop(t, wordT('rubber', 8)) : 0.001);
+    const poke = ease(t, wordT('rubber', 12), wordT('rubber', 13));
     poker.userData.armR.rotation.z = 1.4 * poke;
-    const wob = Math.exp(-Math.max(0, t - wordT('rubber', 12)) * 3) * (t > wordT('rubber', 12) ? 1 : 0);
-    const sag = 0.08 * ease(t, wordT('close', 10), wordT('close', 10) + 0.5);
+    const wob = Math.exp(-Math.max(0, t - wordT('rubber', 13)) * 3) * (t > wordT('rubber', 13) ? 1 : 0);
+    const sag = 0.08 * ease(t, wordT('close', 9), wordT('close', 9) + 0.5);
     T2.userData.body.scale.set(1 + Math.sin(t * 18) * 0.02 * wob, 1 - sag + Math.sin(t * 18 + 1) * 0.03 * wob, 1 + Math.sin(t * 18) * 0.02 * wob);
     // night: inflate, then paint the fake marking
-    const inf = 0.12 + 0.88 * ease(t, wordT('night', 1), wordT('night', 6));
+    const inf = 0.12 + 0.88 * ease(t, wordT('night', 3), wordT('night', 6));
     T5.userData.body.scale.set(0.9 + 0.1 * inf, inf, 0.9 + 0.1 * inf);
     mark.scale.set(Math.max(0.001, ease(t, wordT('night', 8), wordT('night', 10))), 1, 1); mark.position.x = N + 7.2 - 0.62 * (1 - mark.scale.x);
     painter.userData.armR.rotation.z = 1.6 + Math.sin(t * 9) * 0.25;
@@ -271,7 +271,7 @@ export function buildWorld() {
     const spOn = shot === 'speakers';
     rings.forEach((m, i) => { m.visible = spOn; if (!spOn) return; const ph = ((t - wordT('speakers', 0)) * 0.45 + i / rings.length) % 1; m.position.set(SP - 2.5 - ph * 45, 2.05 + ph * 3, 9.4 - ph * 12); m.scale.setScalar(0.8 + ph * 9); m.material.opacity = 0.9 * (1 - ph); });
     // camp signs
-    s1100.scale.setScalar(pop(t, wordT('unit', 10))); secret.scale.setScalar(pop(t, wordT('unit', 6)));
+    s1100.scale.setScalar(pop(t, wordT('unit', 6))); secret.scale.setScalar(pop(t, wordT('unit', 13)));
     officer.userData.armR.rotation.z = shot === 'unit' ? 2.2 : 0;
     // studio
     painter2.userData.armR.rotation.z = 1.5 + Math.sin(t * 8) * 0.3;
@@ -285,13 +285,13 @@ export function buildWorld() {
     flyers.forEach((p, i) => { p.visible = rOn && fs > 0.01; const ph = ((t - wordT('radio', 2)) * 0.35 + i / flyers.length) % 1; const x0 = R - 1.8 + (i % 3) * 1.8; p.position.set(x0 + Math.sin(i * 1.7 + ph * 4) * 1.5 + ph * (i % 2 ? 2 : -2), 1.2 + ph * 3.6, -2.6 + ph * 3.2); p.rotation.set(ph * 6 + i, ph * 4, ph * 3); p.scale.setScalar(fs); });
     ops.forEach((o, i) => { o.userData.armR.rotation.z = rOn ? 1.2 + Math.sin(t * 6 + i) * 0.15 : 0; });
     // archive: box slides into the shelf, years tick by
-    const sl = ease(t, wordT('secret', 2), wordT('secret', 5));
+    const sl = ease(t, wordT('secret', 5), wordT('secret', 7));
     fileBox.position.set(V + 0.4 + (V + 1.6 + 0.35 - (V + 0.4)) * sl, 1.33 + (0.05 + 0.58 + 0.8 - 1.33) * sl + Math.sin(sl * Math.PI) * 0.6, -1.4 + (-4.95 + 1.4) * sl);
     fileBox.rotation.y = (1 - sl) * 0.4;
-    const yr = Math.round(1945 + 51 * ease(t, wordT('secret', 6), wordT('secret', 9)));
+    const yr = Math.round(1945 + 51 * ease(t, wordT('secret', 13), wordT('secret', 15)));
     if (shot === 'secret' && yr !== lastYr) { drawYear(yr, yr >= 1996); lastYr = yr; }
     clerk.userData.armR.rotation.z = shot === 'secret' ? 1.0 * (1 - sl) + 0.2 : 0;
   };
 
-  return {group: W, update};
+  return {group: W, update, groups: {cyc, carriers: carriers.map((q) => q.c), boss: [boss], all: chars}};
 }

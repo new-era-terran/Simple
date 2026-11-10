@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-export const INK = '#351f22';
+export const INK = '#3a2216';
 const INK_C = new THREE.Color(INK);
 
 // ---------- seeded random ----------

@@ -11,7 +11,7 @@ import {OutputPass} from 'three/examples/jsm/postprocessing/OutputPass.js';
 import {UnrealBloomPass} from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import timing from './timing.json';
 import {buildWorld} from './worlds.js';
-import {cameraAt, dipAt, LIGHTS, CUTS} from './camera.js';
+import {cameraAt3 as cameraAt, dipAt, LIGHTS, CUTS} from './camera.js';
 
 const USE_BOKEH = false;
 
@@ -44,9 +44,9 @@ function makeSky() {
   return m;
 }
 
-const Scene = ({frame, fps}) => {
+const Scene = ({frame, fps, ov}) => {
   const {gl, scene, camera, size} = useThree();
-  const t = frame / fps;
+  const t = ov && ov.t != null ? ov.t : frame / fps;
   const world = useMemo(() => buildWorld(), []);
   const lights = useMemo(() => {
     const sun = new THREE.DirectionalLight('#ffffff', 1.5);
@@ -78,8 +78,11 @@ const Scene = ({frame, fps}) => {
   useFrame(() => {
     const tt = tRef.current;
     const cam = cameraAt(tt);
-    camera.fov = 80; camera.near = 0.1; camera.far = 900; camera.updateProjectionMatrix();
-    camera.position.copy(cam.pos); camera.lookAt(cam.look);
+    if (ov && ov.pos) { cam.pos = new THREE.Vector3(...ov.pos); cam.look = new THREE.Vector3(...ov.look); }
+    camera.fov = (ov && ov.fov) || cam.fov || 80; camera.near = 0.05; camera.far = 900; camera.updateProjectionMatrix();
+    camera.position.copy(cam.pos);
+    if (cam.roll) { camera.position.x += Math.sin(tt * 23) * 0.012 + Math.sin(tt * 37) * 0.006; camera.position.y += Math.sin(tt * 29) * 0.01; } // handheld shake on tense shots
+    camera.lookAt(cam.look); const rl = ov && ov.roll != null ? ov.roll : cam.roll; if (rl) camera.rotateZ(rl);
     const L = LIGHTS[cam.plan.light];
     const A = cam.plan.anchor;
     lights.sun.color.set(L.sun); lights.sun.intensity = L.si;
@@ -94,6 +97,7 @@ const Scene = ({frame, fps}) => {
     su.sunDir.value.set(L.sunOff[0], L.sunOff[1], L.sunOff[2]).normalize(); su.sunOn.value = (['day', 'morning', 'yard', 'golden'].includes(cam.plan.light)) ? 1 : 0; su.sunCol.value.set(L.sun);
     if (L.pt) { lights.pt.color.set(L.pt.c); lights.pt.intensity = L.pt.i; lights.pt.distance = L.pt.d; lights.pt.position.set(A[0] + L.pt.p[0], A[1] + L.pt.p[1], A[2] + L.pt.p[2]); } else lights.pt.intensity = 0;
     world.update(tt, camera, cam.key);
+    if (ov && ov.faces) for (const [g, f] of ov.faces) for (const c of world.groups[g]) c.userData.setFace(f);
     comp.bokeh.uniforms.focus.value = cam.pos.distanceTo(cam.look);
   }, 0);
   useFrame(() => { comp.c.render(); }, 1);
@@ -118,18 +122,28 @@ const Caption = ({t}) => {
   );
 };
 
-export const Full = () => {
-  const frame = useCurrentFrame();
+const Word = ({w}) => (
+  <div style={{position: 'absolute', left: 0, right: 0, top: '67%', textAlign: 'center'}}>
+    <span style={{fontFamily: '"Arial Black", Arial, sans-serif', fontWeight: 900, fontSize: 54, color: '#fff', WebkitTextStroke: '9px #1a1414', paintOrder: 'stroke fill', textShadow: '0 4px 0 rgba(0,0,0,0.35)'}}>{w}</span>
+  </div>);
+export const Full = ({ov = null}) => {
+  const frame0 = useCurrentFrame();
+  const frame = ov && ov.t != null ? Math.round(ov.t * 30) : frame0;
   const {width, height, fps} = useVideoConfig();
-  const dip = dipAt(frame / fps);
+  const t0 = frame / fps;
+  const dip = dipAt(t0) * 0.35;
+  // whip: short sideways blur across every location cut
+  let wk = 0, wd = 1; CUTS.forEach((c, i) => { if (i === 0) return; const d = t0 - c; if (d > -0.1 && d < 0.13) { wk = 1 - Math.abs(d) / (d < 0 ? 0.1 : 0.13); wd = d < 0 ? -1 : 1; } });
   return (
     <AbsoluteFill style={{backgroundColor: '#000'}}>
+      <AbsoluteFill style={{filter: wk > 0 ? `blur(${(wk * 9).toFixed(1)}px)` : 'none', transform: wk > 0 ? `translateX(${(wd * wk * 70).toFixed(0)}px) scale(${1 + 0.06 * wk})` : 'none'}}>
       <ThreeCanvas width={width} height={height} linear={false} flat shadows
         gl={{antialias: true, preserveDrawingBuffer: true}} camera={{fov: 80, near: 0.1, far: 900, position: [0, 5, 20]}}>
-        <Scene frame={frame} fps={fps} />
+        <Scene frame={frame} fps={fps} ov={ov} />
       </ThreeCanvas>
+      </AbsoluteFill>
       <AbsoluteFill style={{backgroundColor: '#f6ecd6', opacity: dip}} />
-      <Caption t={frame / fps} />
+      {ov && ov.word ? <Word w={ov.word} /> : <Caption t={frame / fps} />}
     </AbsoluteFill>
   );
 };
