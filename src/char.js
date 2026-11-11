@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {INK, rng} from './kit.js';
+import {INK, rng, flagTex} from './kit.js';
 
 const inkMat = new THREE.MeshBasicMaterial({color: INK, side: THREE.DoubleSide});
 const fillCache = new Map();
@@ -46,6 +46,38 @@ function stick(x0, y0, x1, y1, w0, w1) {
   return new THREE.Mesh(new THREE.ShapeGeometry(s), inkMat);
 }
 
+
+// ===== style-B faces: flat 2D faces drawn on a canvas, laid on the head =====
+const FACE_SVG = {
+  calm: [['e', -17, 4, 7, 9, '#fff'], ['e', 17, 4, 7, 9, '#fff'], ['c', -15, 6, 4], ['c', 15, 6, 4], ['p', 'M-24 -1 Q-17 -5 -10 -1 M10 -1 Q17 -5 24 -1', 3], ['p', 'M-9 26 Q0 31 9 26', 3.5]],
+  smug: [['p', 'M-26 2 L-8 2 M8 2 L26 2', 4], ['c', -14, 6, 3.5], ['c', 20, 6, 3.5], ['p', 'M-26 -10 L-8 -6 M8 -6 L26 -12', 4], ['p', 'M-6 27 Q8 30 16 22', 3.5]],
+  shock: [['e', -17, 2, 12, 12, '#fff'], ['e', 17, 2, 12, 12, '#fff'], ['c', -17, 3, 3], ['c', 17, 3, 3], ['p', 'M-28 -18 L-8 -14 M8 -14 L28 -18', 4], ['f', 'M-8 32 a8 10 0 1 0 16 0 a8 10 0 1 0 -16 0', '#5a1a1e']],
+  scared: [['t', 'M-48 -26 Q0 -38 48 -26 L48 -8 L-48 -8Z', '#6f9be0', 0.5], ['e', -17, 2, 12, 13, '#fff'], ['e', 17, 2, 12, 13, '#fff'], ['c', -17, 3, 2.5], ['c', 17, 3, 2.5], ['p', 'M-28 -18 L-8 -12 M8 -12 L28 -18', 4], ['f', 'M-14 24 l7 -4 l7 4 l7 -4 l7 4 v10 h-28z', '#5a1a1e'], ['f', 'M42 -10 q6 10 0 15 q-6 -5 0 -15z', '#8fd3ff'], ['f', 'M-44 4 q5 8 0 12 q-5 -4 0 -12z', '#8fd3ff']],
+  angry: [['t', 'M-60 -50 Q0 -70 60 -50 L60 10 L-60 10Z', '#e2413a', 0.55], ['c', -16, 4, 4], ['c', 16, 4, 4], ['p', 'M-28 -10 L-6 -2 M6 -2 L28 -10', 5], ['f', 'M-14 20 h28 v12 h-28z', '#fff'], ['p', 'M-14 26 H14 M-5 20 V32 M5 20 V32', 2]],
+  shout: [['t', 'M-60 -50 Q0 -70 60 -50 L60 10 L-60 10Z', '#e2413a', 0.35], ['c', -16, 2, 4], ['c', 16, 2, 4], ['p', 'M-28 -12 L-6 -4 M6 -4 L28 -12', 5], ['f', 'M-16 18 Q0 14 16 18 Q14 42 0 42 Q-14 42 -16 18Z', '#5a1a1e'], ['f', 'M-8 34 Q0 30 8 34 Q4 40 0 40 Q-4 40 -8 34Z', '#e8706a']],
+  happy: [['p', 'M-24 4 Q-17 -4 -10 4 M10 4 Q17 -4 24 4', 4], ['f', 'M-14 20 Q0 40 14 20Z', '#5a1a1e'], ['b', -28, 16], ['b', 28, 16]],
+  worried: [['e', -17, 5, 7, 9, '#fff'], ['e', 17, 5, 7, 9, '#fff'], ['c', -17, 8, 3.5], ['c', 17, 8, 3.5], ['p', 'M-26 -8 L-8 -14 M8 -14 L26 -8', 4], ['p', 'M-10 28 q5 -5 10 0 q5 5 10 0', 3.5]],
+  wink: [['p', 'M-24 4 Q-17 -4 -10 4', 4], ['e', 17, 3, 7, 9, '#fff'], ['c', 17, 5, 4], ['p', 'M8 -8 L26 -12', 4], ['f', 'M-10 22 Q6 36 18 18 Q4 26 -10 22Z', '#5a1a1e'], ['b', -28, 16]],
+};
+const FACE_MAP = {calm: 'calm', smile: 'happy', shout: 'shout', angry: 'angry', surprised: 'shock', worried: 'worried', smug: 'smug', scared: 'scared', furious: 'angry', wink: 'wink'};
+const faceTexCache = {};
+function faceTex(name) {
+  if (faceTexCache[name]) return faceTexCache[name];
+  const c = document.createElement('canvas'); c.width = c.height = 512; const g = c.getContext('2d');
+  g.translate(256, 256); g.scale(4, 4); g.translate(0, 4); g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = INK;
+  for (const it of FACE_SVG[name]) {
+    const [k] = it;
+    if (k === 'e') { g.beginPath(); g.ellipse(it[1], it[2], it[3], it[4], 0, 0, 7); g.fillStyle = it[5]; g.fill(); g.lineWidth = 3; g.stroke(); }
+    else if (k === 'c') { g.beginPath(); g.arc(it[1], it[2], it[3], 0, 7); g.fillStyle = INK; g.fill(); }
+    else if (k === 'p') { g.lineWidth = it[2]; g.stroke(new Path2D(it[1])); }
+    else if (k === 'f') { const P = new Path2D(it[1]); g.fillStyle = it[2]; g.fill(P); g.lineWidth = 3; g.stroke(P); }
+    else if (k === 't') { g.save(); g.beginPath(); g.arc(0, -4, 60, 0, 7); g.clip(); g.globalAlpha = it[3]; g.fillStyle = it[2]; g.fill(new Path2D(it[1])); g.restore(); }
+    else if (k === 'b') { g.save(); g.globalAlpha = 0.7; g.fillStyle = '#f2a7a0'; g.beginPath(); g.ellipse(it[1], it[2], 7, 4, 0, 0, 7); g.fill(); g.restore(); }
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; faceTexCache[name] = t; return t;
+}
+const steamPuffs = (grp, seed) => { for (const [x, s2] of [[-0.3, 1], [0.32, 0.85]]) for (let i = 0; i < 3; i++) { const m = new THREE.Mesh(new THREE.CircleGeometry(0.05 * s2 * (1 - i * 0.15), 12), new THREE.MeshBasicMaterial({color: '#f4f1ea'})); m.position.set(x + (i - 1) * 0.05 * s2 * Math.sign(x), 0.3 + i * 0.07, 0.05); grp.add(m); } };
+
 export const PALETTES = {
   engineer: {jacket: '#3e5a7a', jacket2: '#334c68', tie: '#b3392f', hair: '#4a3328'},
   student: {jacket: '#c4793d', jacket2: '#a9652f', tie: '#2f5d62', hair: '#2b1d17'},
@@ -57,12 +89,15 @@ export const PALETTES = {
   mustard: {jacket: '#d9a441', jacket2: '#bf8f36', tie: '#3e5a7a', hair: '#5a3a26'},
   pink: {jacket: '#d77a9c', jacket2: '#bf6687', tie: '#2f5d62', hair: '#6b4430'},
   navy: {jacket: '#2e3f6b', jacket2: '#26355a', tie: '#e0533d', hair: '#1f1a18'},
+  french: {jacket: '#3d6fb8', jacket2: '#2c4f88', tie: '#d8232f', hair: '#3b2a22'},
+  french2: {jacket: '#e8dcc0', jacket2: '#6b4a36', tie: '#1f3f9a', hair: '#5a3a26'},
+  german: {jacket: '#7b8276', jacket2: '#646a60', tie: '#4c5148', hair: '#8b7a5a'},
   soldier: {jacket: '#6b7a3f', jacket2: '#5b6935', tie: '#4a5530', hair: '#4a3328'},
   soldier2: {jacket: '#74804a', jacket2: '#636e3e', tie: '#3f4a2a', hair: '#2b1d17'},
   officer: {jacket: '#7d6a4a', jacket2: '#6a593d', tie: '#5b6935', hair: '#5a3a26'},
 };
 
-export function character({palette = 'engineer', hat = 'none', glasses = false, seed = 1, scale = 1, face = 'calm', hair = 'fringe', beard = 'none', head: headScale = 1.14, skin = '#f4ecdc'} = {}) {
+export function character({palette = 'engineer', hat = 'none', glasses = false, seed = 1, scale = 1, face = 'calm', hair = 'fringe', beard = 'none', head: headScale = 1.14, skin = '#f4ecdc', patch = null} = {}) {
   const P = PALETTES[palette];
   const root = new THREE.Group();
   const body = new THREE.Group(); root.add(body);
@@ -76,6 +111,7 @@ export function character({palette = 'engineer', hat = 'none', glasses = false, 
   const lower = []; for (let i = 0; i <= 12; i++) { const a = Math.PI + Math.PI * i / 12; lower.push([Math.cos(a) * 0.255, 0.86 + Math.sin(a) * 0.17]); }
   body.add(flat(lower, P.jacket2, 0.015, 0.0, seed + 4));
   body.add(flat([[0.07, 0.98], [0.17, 0.98], [0.16, 0.9], [0.08, 0.9]], P.jacket2, 0.02, 0.008, seed + 5));
+  if (patch) { const pm = new THREE.Mesh(new THREE.PlaneGeometry(0.15, 0.08), new THREE.MeshBasicMaterial({map: flagTex(patch), side: THREE.DoubleSide})); pm.position.set(-0.11, 1.07, 0.03); pm.rotation.z = 0.08; body.add(pm); }
   body.add(flat([[-0.11, 1.25], [0, 1.15], [0.11, 1.25], [0.0, 1.28]], '#fbf7ee', 0.025, 0.01, seed + 6));
   body.add(flat([[-0.025, 1.17], [0.025, 1.17], [0.04, 0.98], [0, 0.93], [-0.04, 0.98]], P.tie, 0.03, 0.008, seed + 7));
   // buttons
@@ -172,6 +208,13 @@ export function character({palette = 'engineer', hat = 'none', glasses = false, 
   line(faces.wink, circlePts(-0.11, -0.03, 0.055, 0.045, 9, 0.25, Math.PI - 0.25), 0.012);
   brow(faces.wink, 0.05, 0.12, 0.19, 0.15);
   faces.wink.add(flat(circlePts(0.02, -0.13, 0.08, 0.045, 16, Math.PI, Math.PI * 2), '#3a1418', 0.024, 0.01, seed + 55));
+  // style B: swap the built faces for flat drawn ones (same names, so face events keep working)
+  for (const k in faces) {
+    faces[k].children.forEach((m) => { m.visible = false; });
+    const pl = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.8), new THREE.MeshBasicMaterial({map: faceTex(FACE_MAP[k] || 'calm'), transparent: true, depthWrite: false, side: THREE.DoubleSide}));
+    pl.position.z = 0.03; faces[k].add(pl);
+    if (k === 'furious') steamPuffs(faces[k], seed);
+  }
   for (const k in faces) { faces[k].visible = k === face; head.add(faces[k]); }
   let curFace = face;
   root.userData.setFace = (f) => { if (f === curFace || !faces[f]) return; faces[curFace].visible = false; faces[f].visible = true; curFace = f; };
@@ -190,6 +233,8 @@ export function character({palette = 'engineer', hat = 'none', glasses = false, 
   } else if (hat === 'helmet') {
     head.add(flat(circlePts(0, 0.13, 0.36, 0.3, 22, 0, Math.PI), P.jacket2, 0.035, 0.02, seed + 19));
     head.add(flat([[-0.42, 0.15], [0.42, 0.15], [0.42, 0.09], [-0.42, 0.09]], P.jacket2, 0.036, 0.02, seed + 20));
+  } else if (hat === 'stahlhelm') {
+    head.add(flat([...circlePts(0, 0.12, 0.34, 0.31, 20, 0.12, Math.PI - 0.12), [-0.4, 0.02], [-0.44, -0.06], [-0.3, 0.02], [0.3, 0.02], [0.44, -0.06], [0.4, 0.02]], P.jacket2, 0.035, 0.02, seed + 19));
   } else if (hat === 'beret') {
     head.add(flat(circlePts(0.05, 0.24, 0.32, 0.12, 22), '#2e3f6b', 0.035, 0.02, seed + 21));
   } else if (hat === 'top') {

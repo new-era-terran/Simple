@@ -11,7 +11,8 @@ import {OutputPass} from 'three/examples/jsm/postprocessing/OutputPass.js';
 import {UnrealBloomPass} from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import timing from './timing.json';
 import {buildWorld} from './worlds.js';
-import {cameraAt3 as cameraAt, dipAt, LIGHTS, CUTS} from './camera.js';
+import {cameraAt3 as cameraAt, dipAt, LIGHTS, CUTS, SUBS, wordT} from './camera.js';
+import {MapAnim} from './MapAnim.jsx';
 
 const USE_BOKEH = false;
 
@@ -22,7 +23,7 @@ const Vignette = {
 };
 
 const Grade = {
-  uniforms: {tDiffuse: {value: null}, sat: {value: 1.22}, con: {value: 1.14}, warm: {value: 0.05}},
+  uniforms: {tDiffuse: {value: null}, sat: {value: 1.12}, con: {value: 1.14}, warm: {value: 0.05}},
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
   fragmentShader: `uniform sampler2D tDiffuse; uniform float sat; uniform float con; uniform float warm; varying vec2 vUv;
   void main(){ vec4 c = texture2D(tDiffuse, vUv); vec3 col = c.rgb; float l = dot(col, vec3(0.299,0.587,0.114));
@@ -68,10 +69,9 @@ const Scene = ({frame, fps, ov}) => {
     const bokeh = new BokehPass(scene, camera, {focus: 5, aperture: 0.0025, maxblur: 0.006});
     if (USE_BOKEH) c.addPass(bokeh); // depth blur off: ~3x faster render
     c.addPass(new UnrealBloomPass(new THREE.Vector2(size.width, size.height), 0.2, 0.4, 0.92));
-    c.addPass(new ShaderPass(Grade));
-    c.addPass(new ShaderPass(Vignette));
+    const gp = new ShaderPass(Grade), vp = new ShaderPass(Vignette); c.addPass(gp); c.addPass(vp);
     c.addPass(new OutputPass());
-    return {c, bokeh};
+    return {c, bokeh, gp, vp};
   }, [gl, scene, camera, size.width, size.height]);
 
   const tRef = useRef(t); tRef.current = t;
@@ -83,7 +83,9 @@ const Scene = ({frame, fps, ov}) => {
     camera.position.copy(cam.pos);
     if (cam.roll) { camera.position.x += Math.sin(tt * 9) * 0.006 + Math.sin(tt * 15) * 0.003; camera.position.y += Math.sin(tt * 11) * 0.005; } // handheld shake on tense shots
     camera.lookAt(cam.look); const rl = ov && ov.roll != null ? ov.roll : cam.roll; if (rl) camera.rotateZ(rl);
-    const L = LIGHTS[cam.plan.light];
+    const soft = !(ov && ov.style === 'hard');
+    const L = soft ? LIGHTS[cam.plan.light === 'campnight' ? 'campnight' : cam.plan.light === 'lamp' ? 'softroom' : 'soft'] : LIGHTS[cam.plan.light];
+    if (soft) { comp.gp.uniforms.sat.value = 0.98; comp.gp.uniforms.con.value = 0.97; comp.gp.uniforms.warm.value = 0.0; comp.vp.uniforms.amount.value = 0.18; }
     const A = cam.plan.anchor;
     lights.sun.color.set(L.sun); lights.sun.intensity = L.si;
     lights.sun.position.set(A[0] + L.sunOff[0], A[1] + L.sunOff[1], A[2] + L.sunOff[2]);
@@ -126,6 +128,8 @@ const Word = ({w}) => (
   <div style={{position: 'absolute', left: 0, right: 0, top: '67%', textAlign: 'center'}}>
     <span style={{fontFamily: '"Arial Black", Arial, sans-serif', fontWeight: 900, fontSize: 54, color: '#fff', WebkitTextStroke: '9px #1a1414', paintOrder: 'stroke fill', textShadow: '0 4px 0 rgba(0,0,0,0.35)'}}>{w}</span>
   </div>);
+const LABELS = [['rubber', 8, 13.9, ['THE TRICK', 'RUBBER TANK', '93 lb · four men can lift it']], ['unit', 6, 17.9, ['THE UNIT', '1,100 MEN', 'made to look like 30,000']], ['speakers', 5, 8.9, ['SOUND TRICK', '15 MILES', 'how far the fake tanks were heard']], ['secret', 9, 12.9, ['SWORN TO SECRECY', 'TOP SECRET', 'until 1996']]];
+const Badge = ({l}) => (<div style={{position: 'absolute', top: 70, left: 0, right: 0, textAlign: 'center'}}><div style={{display: 'inline-block', background: '#1d2a44', border: '5px solid #d9b45a', borderRadius: 12, padding: '8px 28px 10px', boxShadow: '0 7px 0 rgba(0,0,0,0.3)'}}><div style={{font: '900 20px Arial', color: '#d9b45a', letterSpacing: 2}}>{l[0]}</div><div style={{font: '900 52px Arial', color: '#fff', lineHeight: 1.05}}>{l[1]}</div><div style={{font: '700 20px Arial', color: '#cfd8e8'}}>{l[2]}</div></div></div>);
 export const Full = ({ov = null}) => {
   const frame0 = useCurrentFrame();
   const frame = ov && ov.t != null ? Math.round(ov.t * 30) : frame0;
@@ -143,6 +147,9 @@ export const Full = ({ov = null}) => {
       </ThreeCanvas>
       </AbsoluteFill>
       <AbsoluteFill style={{backgroundColor: '#f6ecd6', opacity: dip}} />
+      {(() => { const c = cameraAt(ov && ov.t != null ? ov.t : t0); const x = SUBS[c.sub]; return x.key === 'rhine' && (x.j === 1 || x.j === 3) ? <MapAnim t={ov && ov.t != null ? ov.t : t0} push={Math.min(1, ((ov && ov.t != null ? ov.t : t0) - x.a) / (x.b - x.a))} /> : null; })()}
+      {(() => { const tt = ov && ov.t != null ? ov.t : t0; const L = LABELS.find(([k, a, b]) => tt >= wordT(k, a) && tt < wordT(k, b)); return L ? <Badge l={L[3]} /> : null; })()}
+      {ov && ov.label && <div style={{position: 'absolute', top: 60, left: 0, right: 0, textAlign: 'center'}}><div style={{display: 'inline-block', background: '#1d2a44', border: '4px solid #d9b45a', borderRadius: 10, padding: '6px 22px 8px', boxShadow: '0 6px 0 rgba(0,0,0,0.3)'}}><div style={{font: '900 15px Arial', color: '#d9b45a', letterSpacing: 2}}>{ov.label[0]}</div><div style={{font: '900 40px Arial', color: '#fff'}}>{ov.label[1]}</div>{ov.label[2] && <div style={{font: '700 15px Arial', color: '#cfd8e8'}}>{ov.label[2]}</div>}</div></div>}
       {ov && ov.word ? <Word w={ov.word} /> : <Caption t={frame / fps} />}
     </AbsoluteFill>
   );

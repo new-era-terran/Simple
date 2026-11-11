@@ -42,14 +42,31 @@ export function bus() {
 // ---------- street furniture ----------
 export function tree(s = 1, seed = 1) {
   const t = g(); const r = rng(seed);
-  t.add(cyl(0.12 * s, 0.18 * s, 2.2 * s, '#6b4430', {y: 1.1 * s}));
-  const cols = ['#4f8a4a', '#5f9e4f', '#3f7a45', '#6aa84f'];
-  for (let i = 0; i < 6; i++) {
-    const m = new THREE.Mesh(new THREE.IcosahedronGeometry((0.7 + r() * 0.4) * s, 1), toon(cols[i % 4]));
-    m.position.set((r() - 0.5) * 1.2 * s, (2.4 + r() * 1.0) * s, (r() - 0.5) * 1.2 * s); ink(m, 0.03 * s, false); t.add(m);
+  t.add(cyl(0.13 * s, 0.2 * s, 2.4 * s, '#7a4e2e', {y: 1.2 * s}));
+  const sets = [['#3f9a3c', '#5cb848', '#8fd25a'], ['#2f8a4a', '#4aa85a', '#7fcf6a'], ['#5a9a2f', '#7cbf3a', '#b0dc5a']][seed % 3];
+  const n = 7 + Math.floor(r() * 3);
+  for (let i = 0; i < n; i++) {
+    const up = i / n; const m = new THREE.Mesh(new THREE.SphereGeometry((0.75 + r() * 0.35) * s * (1 - up * 0.3), 14, 10), toon(sets[Math.min(2, Math.floor(up * 3 + r() * 0.6))]));
+    const a = r() * 6.28, rad = (1 - up) * 0.75 * s; m.position.set(Math.cos(a) * rad, (2.5 + up * 1.6) * s, Math.sin(a) * rad); ink(m, 0.03 * s, false); t.add(m);
   }
-  t.add(box(1.2 * s, 0.35 * s, 1.2 * s, '#8a7a6a', {y: 0.17 * s, thick: 0.02}));
   return t;
+}
+// French village house: plaster wall, shutters, flower box, tiled roof
+export function frenchHouse({w = 7.4, h = 7.5, color = '#f1e3c4', shutter = '#3f7fb8', roofC = '#c9573c', seed = 1, sign: label = null} = {}) {
+  const H = g(); const r = rng(seed);
+  H.add(box(w, h, 6, color, {y: h / 2, z: -3, thick: 0.04}));
+  const roof = new THREE.Mesh(new THREE.ExtrudeGeometry((() => { const sh = new THREE.Shape(); sh.moveTo(-w / 2 - 0.4, 0); sh.lineTo(w / 2 + 0.4, 0); sh.lineTo(0, 2.6); sh.closePath(); return sh; })(), {depth: 6.8, bevelEnabled: false}), toon(roofC));
+  roof.rotation.y = Math.PI / 2; roof.position.set(0, h, -3); roof.rotation.y = 0; roof.position.set(0, h, -6.4); ink(roof, 0.04, true, 20); H.add(roof);
+  for (let row = 0; row < 2; row++) for (const x of [-w / 4, w / 4]) {
+    if (row === 0 && label) continue;
+    const y = row === 0 ? 1.9 : h - 2.6; const ww = 1.1, wh = 1.5;
+    H.add(box(ww, wh, 0.1, '#2b3a55', {x, y: y + wh / 2, z: 0.02, thick: 0.02}));
+    H.add(box(0.06, wh, 0.12, '#f4efe4', {x, y: y + wh / 2, z: 0.06, thick: 0.0}));
+    for (const sx of [-1, 1]) H.add(box(0.5, wh + 0.1, 0.08, shutter, {x: x + sx * (ww / 2 + 0.28), y: y + wh / 2, z: 0.08, thick: 0.02}));
+    H.add(box(ww + 0.3, 0.25, 0.35, '#8a5a3b', {x, y: y - 0.12, z: 0.2, thick: 0.02}));
+    for (let k = 0; k < 4; k++) { const f = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 6), toon(['#e0533d', '#f2c12e', '#e86aa0', '#ffffff'][(k + seed) % 4])); f.position.set(x - 0.45 + k * 0.3, y + 0.08, 0.25); H.add(f); }
+  }
+  return H;
 }
 export const hydrant = () => { const h = g(); h.add(cyl(0.16, 0.2, 0.7, '#c43d32', {y: 0.35}), cyl(0.2, 0.2, 0.1, '#c43d32', {y: 0.72})); const n = cyl(0.07, 0.07, 0.5, '#c43d32', {y: 0.45}); n.rotation.z = Math.PI / 2; h.add(n); return h; };
 export const trashCan = () => { const h = g(); h.add(cyl(0.3, 0.26, 0.95, '#6f7a7d', {y: 0.48, seg: 12}), cyl(0.33, 0.33, 0.08, '#5a6366', {y: 0.98, seg: 12})); return h; };

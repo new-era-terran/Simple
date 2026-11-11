@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {INK, rng, toon, box, cyl, sign, signTex, facade, crate, ground, cloud, paintTex, ink, lampPost, woodTex, brickTex, cobbleTex, grassTex, wallTex} from './kit.js';
+import {INK, rng, toon, box, cyl, sign, signTex, facade, crate, ground, cloud, paintTex, ink, lampPost, woodTex, brickTex, cobbleTex, grassTex, wallTex, flagPole, bunting} from './kit.js';
 import {character} from './char.js';
 import {wordT} from './camera.js';
 import * as P from './props.js';
@@ -28,7 +28,7 @@ function room(ox, {w = 14, h = 5, d = 10, wall = '#3f6e78', floor = '#b08050', s
 }
 const hang = (W, x, z, y = 5.1, c = '#2f5d62') => { W.add(cyl(0.02, 0.02, 0.8, '#2b2b2e', {x, y, z})); W.add(cyl(0.15, 0.45, 0.35, c, {x, y: y - 0.5, z, seg: 14})); const b = new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 8), new THREE.MeshBasicMaterial({color: '#fff1c0'})); b.position.set(x, y - 0.65, z); W.add(b); };
 const HAIRS = ['fringe', 'side', 'bald', 'fringe'], BEARDS = ['none', 'moustache', 'none', 'full', 'none'];
-const person = (W, chars, x, z, pal = 'soldier', hat = 'helmet', seed = 1, y = 0.05, glasses = false, opt = {}) => { const sd = Math.abs(Math.round(seed)); const c = character({palette: pal, hat, seed, glasses, hair: HAIRS[sd % 4], beard: BEARDS[sd % 5], ...opt}); c.position.set(x, y, z); W.add(c); chars.push(c); return c; };
+const person = (W, chars, x, z, pal = 'soldier', hat = 'helmet', seed = 1, y = 0.05, glasses = false, opt = {}) => { const sd = Math.abs(Math.round(seed)); const c = character({palette: pal, hat, seed, glasses, hair: HAIRS[sd % 4], beard: BEARDS[sd % 5], patch: ['soldier', 'soldier2', 'officer'].includes(pal) ? 'us' : null, ...opt}); c.position.set(x, y, z); W.add(c); chars.push(c); return c; };
 const SOL = ['soldier', 'soldier2', 'officer'];
 
 export function buildWorld() {
@@ -39,7 +39,7 @@ export function buildWorld() {
   const r = rng(5);
 
   // ================= FRENCH FIELD (day) + night area + speaker road =================
-  const gr = new THREE.Mesh(new THREE.BoxGeometry(420, 0.4, 170), toon('#ffffff', grassTex('#6fa64a', {repeat: [60, 24]}))); gr.position.set(60, -0.2, -20); gr.receiveShadow = true; W.add(gr);
+  const gr = new THREE.Mesh(new THREE.BoxGeometry(420, 0.4, 170), toon('#ffffff', grassTex('#6eb04a', {repeat: [60, 24]}))); gr.position.set(60, -0.2, -20); gr.receiveShadow = true; W.add(gr);
   const road = new THREE.Mesh(new THREE.BoxGeometry(420, 0.06, 3.6), toon('#ffffff', cobbleTex('#c0a88a', {repeat: [320, 3]})));
   road.position.set(60, 0.03, 9.4); road.receiveShadow = true; W.add(road);
   // hedges + trees along the far side of the road, scattered hedges on the near side (gaps for cameras)
@@ -52,20 +52,22 @@ export function buildWorld() {
   W.add(box(9, 7, 7, '#c9b38a', {x: -24, y: 3.5, z: -29.6, thick: 0.04}));
   const roof = new THREE.Mesh(new THREE.ExtrudeGeometry((() => { const s = new THREE.Shape(); s.moveTo(-5, 0); s.lineTo(5, 0); s.lineTo(0, 3); s.closePath(); return s; })(), {depth: 8, bevelEnabled: false}), toon('#b8573f')); roof.position.set(-24, 7, -33.3); ink(roof, 0.04, true); W.add(roof);
   const VZ = -30; // village row facing the field
-  [['BAKERY', 14.5, '#d1a47a'], ['PHOTO', 22, '#c98f6b'], ['CAFE', 29.5, '#b8775e'], ['TAILOR', 37, '#c4a27c']].forEach(([n, x, c], i) => {
+  [['BAKERY', 14.5, '#f4d6b0', '#3f7fb8'], ['PHOTO', 22, '#f1e3c4', '#4f9a6a'], ['CAFE', 29.5, '#f6c9b4', '#3f7fb8'], ['TAILOR', 37, '#f6e7b4', '#b8573f']].forEach(([n, x, c, sh], i) => {
     const s = P.shopFront(n, c, i + 3); s.position.set(x, 0, VZ); W.add(s);
-    const f = facade({w: 7.4, h: 9, color: c, cols: 2, rows: 2, door: false, seed: 50 + i}); f.position.set(x, 0, VZ - 0.5); W.add(f);
-    W.add(box(7.4, 9, 6, '#8f6c5e', {x, y: 4.5, z: VZ - 3.6, thick: 0.04}));
+    const f = P.frenchHouse({w: 7.4, h: 9, color: c, shutter: sh, seed: 50 + i, sign: true}); f.position.set(x, 0, VZ - 0.45); W.add(f);
   });
+  W.add(P.at(flagPole('fr', 6.5, 2.0), 10.3, 0, VZ + 1.2), P.at(flagPole('fr', 6.5, 2.0), 40.8, 0, VZ + 1.2));
+  for (const x of [18.2, 33.2]) { const b = bunting(7.2); b.position.set(x, 5.2, VZ + 0.9); W.add(b); }
   for (const x of [11, 33]) W.add(lampPost(x, VZ + 2.2, 4.6));
   // the cardboard cutout soldier in the PHOTO shop window
   const cut = fe(person(W, chars, 21.1, VZ + 0.75, 'soldier', 'helmet', 77, 0.25), 'smile');
   W.add(box(0.9, 0.25, 0.4, '#b98a52', {x: 21.1, y: 0.12, z: VZ + 0.75, thick: 0.01}));
   const lifeSize = sign('LIFE SIZE!', 1.2, 0.45, {bg: '#f2c12e', w: 400, h: 150, font: 'bold 70px Arial'}); lifeSize.position.set(22.6, 1.0, VZ + 0.5); lifeSize.rotation.y = -0.2; W.add(lifeSize);
-  for (const [x, pal, hat] of [[17, 'red', 'beret'], [26.5, 'teal', 'none'], [31.5, 'pink', 'none']]) person(W, chars, x, VZ + 2.6, pal, hat, 700 + x);
+  for (const [x, pal, hat] of [[17, 'french', 'beret'], [26.5, 'french2', 'none'], [31.5, 'pink', 'none']]) person(W, chars, x, VZ + 2.6, pal, hat, 700 + x);
   for (let i = 0; i < 9; i++) W.add(cloud(-60 + i * 25, 115 + (i % 3) * 10, -170, 6));
 
   // field dressing: tents, trucks, jeeps, hay, fences, crates, soldiers
+  W.add(P.at(flagPole('us', 6, 2.0), -17, 0, -14));
   for (let i = 0; i < 5; i++) W.add(P.at(P.tent(4, 5, 2.6), -14 + i * 6.5, 0, -18 - (i % 2) * 2));
   W.add(P.at(P.armyTruck(), -11, 0, -6, 0.5), P.at(P.armyTruck(), 30, 0, -4, -0.3), P.at(P.jeep(), -7, 0, 2.5, 0.2), P.at(P.jeep(), 21, 0, 2.0, -0.6));
   for (const [x, z] of [[-17, 1], [-15.6, 1.3], [33, -9], [34.4, -9.4], [-4, -14], [40, 1.5]]) W.add(P.at(P.haybale(), x, 0, z, r()));
@@ -81,7 +83,7 @@ export function buildWorld() {
   const carriers = [[-1.25, 1.35, 'soldier'], [1.25, 1.4, 'soldier2'], [-2.75, 0.4, 'soldier2'], [2.9, -0.1, 'soldier']].map(([dx, dz, pal], i) => ({c: fe(person(W, chars, 0, 0, pal, 'helmet', 610 + i), i % 2 ? 'smug' : 'smile', i === 0 ? [['cyclists', 9, 'wink']] : []), dx, dz}));
   // cyclists on the road
   const cyc = [];
-  for (const [x, pal, hat, bc] of [[6.0, 'red', 'beret', '#2f6db3'], [7.5, 'mustard', 'cap', '#c43d32']]) { const c = fe(person(W, chars, x, 8.3, pal, hat, 650 + x * 3, 0.05, false, {beard: x < 7 ? 'moustache' : 'none', hair: 'side'}), 'calm', [['cyclists', 3, 'scared']]); const b = P.bicycle(bc); b.position.set(x + 0.2, 0.05, 8.75); b.rotation.y = 0.15; W.add(b); cyc.push(c); }
+  for (const [x, pal, hat, bc] of [[6.0, 'french', 'beret', '#2f6db3'], [7.5, 'french2', 'cap', '#c43d32']]) { const c = fe(person(W, chars, x, 8.3, pal, hat, 650 + x * 3, 0.05, false, {beard: x < 7 ? 'moustache' : 'none', hair: 'side'}), 'calm', [['cyclists', 3, 'scared']]); const b = P.bicycle(bc); b.position.set(x + 0.2, 0.05, 8.75); b.rotation.y = 0.15; W.add(b); cyc.push(c); }
   // "93 LB" tag and the poking soldier at tank T2
   const lb = sign('93 LB', 1.3, 0.62, {bg: '#f2c12e', w: 420, h: 200, font: 'bold 120px Arial'}); lb.position.set(10.7, 2.75, -0.7); W.add(lb);
   const poker = fe(person(W, chars, 8.6, -0.1, 'soldier2', 'helmet', 640), 'calm', [['rubber', 13, 'smug']]);
@@ -117,6 +119,7 @@ export function buildWorld() {
 
   // ================= ARMY CAMP (yard light) =================
   const C = LOC.camp;
+  W.add(P.at(flagPole('us', 7, 2.2), C + 3.2, 0, -7.5));
   W.add(ground(80, 60, '#b39a72', {x: C, z: -5, seed: 14, repeat: 8}));
   for (let i = 0; i < 6; i++) for (let j = 0; j < 2; j++) W.add(P.at(P.tent(4, 5, 2.6), C - 15 + i * 6, 0, -14 - j * 7));
   for (let row = 0; row < 4; row++) for (let i = 0; i < 7; i++) person(W, chars, C - 5.4 + i * 1.8 + (row % 2) * 0.6, -1.5 - row * 1.5, SOL[(i + row) % 2], 'helmet', 3000 + row * 10 + i);
@@ -202,7 +205,7 @@ export function buildWorld() {
   W.add(P.at(P.radio(), M - 6.4, 1.55, -4.9));
   W.add(P.at(P.wallClock(), M + 4.4, 4.5, -5.4));
   const pa = P.poster('SECRET', 1.0, 1.3, '#f2c12e'); P.at(pa, M - 4.4, 3.3, -5.45); W.add(pa);
-  W.add(P.at(P.flag('#2e3f6b'), M + 4.2, 0.05, -4.6));
+  W.add(P.at(flagPole('us', 2.6, 1.0), M + 4.0, 0.05, -4.4));
   const fd = P.desk(2.2, '#6b4430'); fd.position.set(M - 4.6, 0.05, 2.2); fd.rotation.y = 0.25; W.add(fd);
   W.add(P.at(P.papers(6, 31), M - 4.8, 1.0, 2.2), P.at(P.radio(), M - 4.0, 1.0, 2.0));
   hang(W, M - 3, -1); hang(W, M + 3, -1);

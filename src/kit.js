@@ -280,7 +280,7 @@ export function arrow(color = '#e0533d', len = 3) {
   const m = new THREE.Mesh(new THREE.ExtrudeGeometry(s, {depth: 0.05 * len, bevelEnabled: false}), toon(color));
   return ink(m, 0.008 * len, true);
 }
-export function cloud(x, y, z, s = 1, color = '#e9e4dc') {
+export function cloud(x, y, z, s = 1, color = '#ffffff') {
   const g = new THREE.Group(); const r = rng(Math.floor(x * 7 + y * 3));
   for (let i = 0; i < 5; i++) {
     const m = new THREE.Mesh(new THREE.SphereGeometry(s * (1 + r() * 0.8), 14, 10), toon(color));
@@ -350,4 +350,36 @@ export function wallTex(base = '#3f6e78', {seed = 11, repeat = [2, 1]} = {}) {
     for (let x = 0; x < W; x += 64) { g.fillStyle = shade(base, 0.92 + r() * 0.12); g.fillRect(x, 0, 64, H); g.fillStyle = 'rgba(53,31,34,0.25)'; g.fillRect(x, 0, 2, H); }
     for (let i = 0; i < 20; i++) { g.fillStyle = 'rgba(0,0,0,0.06)'; g.beginPath(); g.ellipse(r() * W, r() * H, 20 + r() * 50, 10 + r() * 30, 0, 0, 7); g.fill(); }
   }, repeat);
+}
+
+// ================= v4 flags =================
+const flagCache = {};
+export function flagTex(country = 'us') {
+  if (flagCache[country]) return flagCache[country];
+  const c = document.createElement('canvas'); c.width = 380; c.height = 200; const g = c.getContext('2d');
+  if (country === 'us') { // 48 stars (1912-1959)
+    for (let i = 0; i < 13; i++) { g.fillStyle = i % 2 ? '#ffffff' : '#c8202f'; g.fillRect(0, i * 200 / 13, 380, 200 / 13 + 1); }
+    g.fillStyle = '#2b3a85'; g.fillRect(0, 0, 152, 107.7); g.fillStyle = '#ffffff';
+    for (let r = 0; r < 6; r++) for (let q = 0; q < 8; q++) { const x = 10 + q * 18.8, y = 9 + r * 17.8; g.beginPath(); for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? 2.6 : 6.2; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } g.fill(); }
+  } else if (country === 'fr') { ['#1f3f9a', '#ffffff', '#d8232f'].forEach((col, i) => { g.fillStyle = col; g.fillRect(i * 380 / 3, 0, 380 / 3 + 1, 200); }); }
+  g.strokeStyle = INK; g.lineWidth = 8; g.strokeRect(0, 0, 380, 200);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; flagCache[country] = t; return t;
+}
+// waving cloth on a pole
+export function flagPole(country = 'us', h = 5, w = 1.9) {
+  const G = new THREE.Group(); G.add(cyl(0.05, 0.06, h, '#d9d4c8', {y: h / 2, seg: 10, thick: 0.015}));
+  const ball = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), toon('#e0b04a')); ball.position.y = h + 0.05; G.add(ball);
+  const geo = new THREE.PlaneGeometry(w, w * 0.53, 16, 4); const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) { const x = pos.getX(i) + w / 2; pos.setZ(i, Math.sin(x * 2.6) * 0.12 * (x / w)); pos.setY(i, pos.getY(i) - x * 0.06); }
+  geo.computeVertexNormals();
+  const cloth = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({map: flagTex(country), side: THREE.DoubleSide}));
+  cloth.position.set(w / 2 + 0.05, h - w * 0.3, 0); G.add(cloth); return G;
+}
+// string of little pennants
+export function bunting(len = 8, cols = ['#1f3f9a', '#ffffff', '#d8232f']) {
+  const G = new THREE.Group(); const n = Math.floor(len / 0.5);
+  for (let i = 0; i < n; i++) { const x = -len / 2 + (i + 0.5) * len / n, sag = -Math.sin((i + 0.5) / n * Math.PI) * 0.5;
+    const tri = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape([new THREE.Vector2(-0.18, 0), new THREE.Vector2(0.18, 0), new THREE.Vector2(0, -0.42)])), new THREE.MeshBasicMaterial({color: cols[i % cols.length], side: THREE.DoubleSide}));
+    tri.position.set(x, sag, 0); G.add(tri); }
+  return G;
 }
