@@ -28,7 +28,7 @@ jobs:
           N=8; P=${{ matrix.part }}
           A=$(( TOTAL * P / N )); B=$(( TOTAL * (P + 1) / N - 1 ))
           echo "frames $A-$B of $TOTAL"
-          npx remotion render src/index.jsx Story out/part$P.mp4 --frames=$A-$B --gl=swangle --concurrency=$(nproc) --image-format=jpeg --jpeg-quality=92 --crf=17
+          npx remotion render src/index.jsx Story out/part$P.mp4 --frames=$A-$B --gl=swangle --concurrency=3 --timeout=120000 --image-format=jpeg --jpeg-quality=92 --crf=17
       - uses: actions/upload-artifact@v4
         with:
           name: part${{ matrix.part }}
