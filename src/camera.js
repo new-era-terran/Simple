@@ -118,9 +118,9 @@ SUBS.forEach((x, i) => { x.b = i + 1 < SUBS.length ? SUBS[i + 1].a : END; });
 export function cameraAt3(t) {
   let i = 0; while (i + 1 < SUBS.length && t >= SUBS[i + 1].a) i++;
   const x = SUBS[i]; const [, p0, p1, l, fov, roll] = x.s;
-  const u0 = Math.min(1, Math.max(0, (t - x.a) / (x.b - x.a))); const u = 1 - Math.pow(1 - u0, 2.2); // fast start, settles
+  const u0 = Math.min(1, Math.max(0, (t - x.a) / (x.b - x.a))); const u = 0.5 * (u0 * u0 * (3 - 2 * u0)); // slow, even drift across the whole sub-shot (half the planned travel)
   const pos = new THREE.Vector3(...p0).lerp(new THREE.Vector3(...p1), u);
   // punch-in: first 0.25 s of a sub-shot starts 6% wider
-  const punch = Math.max(0, 1 - (t - x.a) / 0.25);
-  return {key: x.key, sub: i, pos, look: new THREE.Vector3(...l), fov: fov * (1 + 0.06 * punch * punch), roll, plan: PLAN[x.key], a: x.a, b: x.b};
+  const punch = Math.max(0, 1 - (t - x.a) / 0.4);
+  return {key: x.key, sub: i, pos, look: new THREE.Vector3(...l), fov: fov * (1 + 0.025 * punch * punch), roll, plan: PLAN[x.key], a: x.a, b: x.b};
 }

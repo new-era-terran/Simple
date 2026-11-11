@@ -81,7 +81,7 @@ const Scene = ({frame, fps, ov}) => {
     if (ov && ov.pos) { cam.pos = new THREE.Vector3(...ov.pos); cam.look = new THREE.Vector3(...ov.look); }
     camera.fov = (ov && ov.fov) || cam.fov || 80; camera.near = 0.05; camera.far = 900; camera.updateProjectionMatrix();
     camera.position.copy(cam.pos);
-    if (cam.roll) { camera.position.x += Math.sin(tt * 23) * 0.012 + Math.sin(tt * 37) * 0.006; camera.position.y += Math.sin(tt * 29) * 0.01; } // handheld shake on tense shots
+    if (cam.roll) { camera.position.x += Math.sin(tt * 9) * 0.006 + Math.sin(tt * 15) * 0.003; camera.position.y += Math.sin(tt * 11) * 0.005; } // handheld shake on tense shots
     camera.lookAt(cam.look); const rl = ov && ov.roll != null ? ov.roll : cam.roll; if (rl) camera.rotateZ(rl);
     const L = LIGHTS[cam.plan.light];
     const A = cam.plan.anchor;
